@@ -17,62 +17,71 @@ import com.google.vr.sdk.widgets.video.VrVideoView;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Main View Class
+ *
+ * @author SimonWong
+ * @see AppCompatActivity
+ */
 public class MainActivity extends AppCompatActivity {
 
-    private static final String STATE_IS_PAUSED = "isPaused";
-    private static final String STATE_PROGRESS_TIME = "progressTime";
-    private static final String STATE_VIDEO_DURATION = "videoDuration";
-    public static final int LOAD_VIDEO_STATUS_UNKNOWN = 0;
-    public static final int LOAD_VIDEO_STATUS_SUCCESS = 1;
-    public static final int LOAD_VIDEO_STATUS_ERROR = 2;
-    private int loadVideoStatus = LOAD_VIDEO_STATUS_UNKNOWN;
-    protected VrVideoView videoWidgetView;
-    private VrPanoramaView panoWidgetView;
-    public boolean loadImageSuccessful;
-    private com.google.vr.sdk.widgets.pano.VrPanoramaView.Options panoOptions = new com.google.vr.sdk.widgets.pano.VrPanoramaView.Options();
-    private SeekBar seekBar;
+    // instance passing parameters
+    private static final String STATE_IS_PAUSED = "ISPAUSED";
+    private static final String STATE_PROGRESS_TIME = "PROGRESSTIME";
+    private static final String STATE_VIDEO_DURATION = "VIDEODURATION";
 
-    private ImageButton volumeToggle;
-    private boolean isMuted;
+    // view variable
+    private VrVideoView vrVideoView;
+    private VrPanoramaView vrImageView;
+    private SeekBar vrVideoViewSeekBar;
+    private ImageButton vrVideoViewVolumeToggleIb;
 
-    private boolean isPaused = false;
+    // state variable
+    private boolean isVideoVolumeMuted;
+    private boolean isVideoPaused = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        seekBar = (SeekBar) findViewById(R.id.seek_bar);
-        seekBar.setOnSeekBarChangeListener(new SeekBarListener());
-        videoWidgetView = (VrVideoView) findViewById(R.id.video_view);
-        videoWidgetView.setEventListener(new VideoCallback());
-        panoWidgetView = (VrPanoramaView) findViewById(R.id.pano_view);
-        panoWidgetView.setEventListener(new ImageCallback());
-        volumeToggle = (ImageButton) findViewById(R.id.volume_toggle);
-        volumeToggle.setOnClickListener(new View.OnClickListener() {
+        vrVideoViewSeekBar = (SeekBar) findViewById(R.id.seek_bar);
+        vrVideoViewSeekBar.setOnSeekBarChangeListener(new SeekBarListener());
+        vrVideoView = (VrVideoView) findViewById(R.id.video_view);
+        vrVideoView.setEventListener(new VideoCallback());
+        vrImageView = (VrPanoramaView) findViewById(R.id.pano_view);
+        vrImageView.setEventListener(new ImageCallback());
+        vrVideoViewVolumeToggleIb = (ImageButton) findViewById(R.id.volume_toggle);
+        vrVideoViewVolumeToggleIb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setIsMuted(!isMuted);
+                setIsMuted(!isVideoVolumeMuted);
             }
         });
-        loadVideoStatus = LOAD_VIDEO_STATUS_UNKNOWN;
-        handleIntent(getIntent());
+        initialize();
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
+        // intent launching triggered event #ignoring the passing parameters
         setIntent(intent);
-        handleIntent(intent);
+        initialize();
     }
 
+    /**
+     * Setting Volume of video is muted or not
+     *
+     * @param isMuted - boolean indicating current selected muted state
+     */
     private void setIsMuted(boolean isMuted) {
-        this.isMuted = isMuted;
-        volumeToggle.setImageResource(isMuted ? R.mipmap.volume_off : R.mipmap.volume_on);
-        videoWidgetView.setVolume(isMuted ? 0.0f : 1.0f);
+        this.isVideoVolumeMuted = isMuted;
+        vrVideoViewVolumeToggleIb.setImageResource(isMuted ? R.mipmap.volume_off : R.mipmap.volume_on);
+        vrVideoView.setVolume(isMuted ? 0.0f : 1.0f);
     }
 
-
-    private void handleIntent(Intent intent) {
-
+    /**
+     * Initialize VrVideoView and VrPanoramaView
+     */
+    private void initialize() {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -80,23 +89,19 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     VrVideoView.Options options = new VrVideoView.Options();
                     options.inputType = VrVideoView.Options.TYPE_MONO;
-                    //TYPE_STEREO_OVER_UNDER
-                    String fileName = "mongo.mp4";
-                    videoWidgetView.setDisplayMode(VrVideoView.DisplayMode.FULLSCREEN_STEREO);
-                    videoWidgetView.loadVideoFromAsset("mongo.mp4", options);
-                    videoWidgetView.playVideo();
-//                    videoWidgetView.setDisplayMode(VrVideoView.DisplayMode.FULLSCREEN_STEREO);
-                } catch (IOException e) {
-                    loadVideoStatus = LOAD_VIDEO_STATUS_ERROR;
+                    vrVideoView.setDisplayMode(VrVideoView.DisplayMode.FULLSCREEN_STEREO);
+                    vrVideoView.loadVideoFromAsset("mongo.mp4", options);
+                    vrVideoView.playVideo();
+                } catch (IOException ignored) {
                 }
                 // load image
                 AssetManager assetManager = getAssets();
                 try (InputStream istr = assetManager.open("test.jpg")) {
-                    panoOptions = new com.google.vr.sdk.widgets.pano.VrPanoramaView.Options();
+                    VrPanoramaView.Options panoOptions = new VrPanoramaView.Options();
                     panoOptions.inputType = VrPanoramaView.Options.TYPE_MONO;
-                    panoWidgetView.setDisplayMode(VrPanoramaView.DisplayMode.FULLSCREEN_STEREO);
-                    panoWidgetView.loadImageFromBitmap(BitmapFactory.decodeStream(istr), panoOptions);
-//                    videoWidgetView.setDisplayMode(VrVideoView.DisplayMode.FULLSCREEN_STEREO);
+                    vrImageView.setDisplayMode(VrPanoramaView.DisplayMode.FULLSCREEN_STEREO);
+                    vrImageView.loadImageFromBitmap(BitmapFactory.decodeStream(istr),
+                            panoOptions);
                     istr.close();
                 } catch (IOException ignored) {
                 }
@@ -104,18 +109,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public int getLoadVideoStatus() {
-        return loadVideoStatus;
-    }
-    public boolean isMuted() {
-        return isMuted;
-    }
-
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putLong(STATE_PROGRESS_TIME, videoWidgetView.getCurrentPosition());
-        savedInstanceState.putLong(STATE_VIDEO_DURATION, videoWidgetView.getDuration());
-        savedInstanceState.putBoolean(STATE_IS_PAUSED, isPaused);
+        savedInstanceState.putLong(STATE_PROGRESS_TIME, vrVideoView.getCurrentPosition());
+        savedInstanceState.putLong(STATE_VIDEO_DURATION, vrVideoView.getDuration());
+        savedInstanceState.putBoolean(STATE_IS_PAUSED, isVideoPaused);
         super.onSaveInstanceState(savedInstanceState);
     }
 
@@ -123,55 +121,58 @@ public class MainActivity extends AppCompatActivity {
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
         long progressTime = savedInstanceState.getLong(STATE_PROGRESS_TIME);
-        videoWidgetView.seekTo(progressTime);
-        seekBar.setMax((int) savedInstanceState.getLong(STATE_VIDEO_DURATION));
-        seekBar.setProgress((int) progressTime);
-        isPaused = savedInstanceState.getBoolean(STATE_IS_PAUSED);
-        if (isPaused) {
-            videoWidgetView.pauseVideo();
-        }
+        vrVideoView.seekTo(progressTime);
+        vrVideoViewSeekBar.setMax((int) savedInstanceState.getLong(STATE_VIDEO_DURATION));
+        vrVideoViewSeekBar.setProgress((int) progressTime);
+        isVideoPaused = savedInstanceState.getBoolean(STATE_IS_PAUSED);
+        if (isVideoPaused)
+            vrVideoView.pauseVideo();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        videoWidgetView.pauseRendering();
-        panoWidgetView.pauseRendering();
-        isPaused = true;
+        // Pause the 3D Rendering
+        vrVideoView.pauseRendering();
+        vrImageView.pauseRendering();
+        isVideoPaused = true;
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         // Resume the 3D rendering.
-        videoWidgetView.resumeRendering();
-        panoWidgetView.resumeRendering();
+        vrVideoView.resumeRendering();
+        vrImageView.resumeRendering();
     }
 
     @Override
     protected void onDestroy() {
-        // Free memory.
-        videoWidgetView.shutdown();
-        panoWidgetView.shutdown();
+        // Free memory
+        vrVideoView.shutdown();
+        vrImageView.shutdown();
         super.onDestroy();
     }
 
+    /**
+     * Video Play/Pause toggle function
+     */
     private void togglePause() {
-        if (isPaused) {
-            videoWidgetView.playVideo();
-        } else {
-            videoWidgetView.pauseVideo();
-        }
-        isPaused = !isPaused;
+        if (isVideoPaused)
+            vrVideoView.playVideo();
+        else
+            vrVideoView.pauseVideo();
+        isVideoPaused = !isVideoPaused;
     }
 
-
+    /**
+     * OnSeekBarListener handling vrVideoViewSeekBar onTouch triggering events
+     */
     private class SeekBarListener implements SeekBar.OnSeekBarChangeListener {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if (fromUser) {
-                videoWidgetView.seekTo(progress);
-            }
+            if (fromUser)
+                vrVideoView.seekTo(progress);
         }
 
         @Override
@@ -183,44 +184,53 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * VrVideoEventListener handling VrVideoView onDIsplay triggering events
+     */
     private class VideoCallback extends VrVideoEventListener {
 
         @Override
         public void onLoadSuccess() {
-            loadVideoStatus = LOAD_VIDEO_STATUS_SUCCESS;
-            seekBar.setMax((int) videoWidgetView.getDuration());
+            // customize vrVideoViewSeekBar's length (max value) according to video duration
+            vrVideoViewSeekBar.setMax((int) vrVideoView.getDuration());
         }
 
         @Override
         public void onLoadError(String errorMessage) {
-            loadVideoStatus = LOAD_VIDEO_STATUS_ERROR;
+            // do something when the video fails to be loaded, and with error Message
         }
 
         @Override
         public void onClick() {
+            // event triggered when vrVideoView is clicked
             togglePause();
         }
 
         @Override
         public void onNewFrame() {
-            seekBar.setProgress((int) videoWidgetView.getCurrentPosition());
+            // update vrVideoViewSeekBar's progress during the video is playing
+            vrVideoViewSeekBar.setProgress((int) vrVideoView.getCurrentPosition());
         }
 
         @Override
         public void onCompletion() {
-            videoWidgetView.seekTo(0);
+            // event triggered after the video is finished playing
+            vrVideoView.seekTo(0);
         }
     }
 
+    /**
+     * VrPanoaramaView Image Loading Listener
+     */
     private class ImageCallback extends VrPanoramaEventListener {
         @Override
         public void onLoadSuccess() {
-            loadImageSuccessful = true;
+            // do something to indicate image loading success
         }
 
         @Override
         public void onLoadError(String errorMessage) {
-            loadImageSuccessful = false;
+            // do something to indicate image loading failure with error message
         }
     }
 }
