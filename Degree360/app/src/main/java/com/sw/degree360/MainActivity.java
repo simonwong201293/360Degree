@@ -44,13 +44,13 @@ public class MainActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        vrVideoViewSeekBar = (SeekBar) findViewById(R.id.seek_bar);
+        vrVideoViewSeekBar = (SeekBar) findViewById(R.id.vrvv_seek_bar);
         vrVideoViewSeekBar.setOnSeekBarChangeListener(new SeekBarListener());
-        vrVideoView = (VrVideoView) findViewById(R.id.video_view);
+        vrVideoView = (VrVideoView) findViewById(R.id.vrvv);
         vrVideoView.setEventListener(new VideoCallback());
-        vrImageView = (VrPanoramaView) findViewById(R.id.pano_view);
+        vrImageView = (VrPanoramaView) findViewById(R.id.vriv);
         vrImageView.setEventListener(new ImageCallback());
-        vrVideoViewVolumeToggleIb = (ImageButton) findViewById(R.id.volume_toggle);
+        vrVideoViewVolumeToggleIb = (ImageButton) findViewById(R.id.vrvv_volume_toggle);
         vrVideoViewVolumeToggleIb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

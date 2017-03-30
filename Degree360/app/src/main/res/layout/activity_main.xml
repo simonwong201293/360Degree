@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="10dip"
+    android:padding="12dp"
     android:weightSum="2">
 
     <com.google.vr.sdk.widgets.video.VrVideoView
-        android:id="@+id/video_view"
+        android:id="@+id/vrvv"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -18,29 +16,29 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
-        <!-- Seeking UI & progress indicator.-->
+
         <SeekBar
-            android:id="@+id/seek_bar"
+            android:id="@+id/vrvv_seek_bar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="0dp"
             android:layout_height="32dp"
             android:layout_weight="8" />
 
         <ImageButton
-            android:id="@+id/volume_toggle"
+            android:id="@+id/vrvv_volume_toggle"
+            android:contentDescription="@null"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:background="@android:color/transparent"
-            android:paddingStart="0dp"
             android:paddingTop="4dp"
             android:src="@mipmap/volume_on" />
     </LinearLayout>
 
     <com.google.vr.sdk.widgets.pano.VrPanoramaView
-        android:id="@+id/pano_view"
+        android:id="@+id/vriv"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_margin="5dip" />
+        android:layout_margin="4dp" />
 </LinearLayout>
