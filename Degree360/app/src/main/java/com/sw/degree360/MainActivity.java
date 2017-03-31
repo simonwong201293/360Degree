@@ -2,8 +2,11 @@ package com.sw.degree360;
 
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.ImageButton;
@@ -16,6 +19,8 @@ import com.google.vr.sdk.widgets.video.VrVideoView;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Main View Class
@@ -96,15 +101,17 @@ public class MainActivity extends AppCompatActivity {
                 }
                 // load image
                 AssetManager assetManager = getAssets();
-                try (InputStream istr = assetManager.open("test.jpg")) {
-                    VrPanoramaView.Options panoOptions = new VrPanoramaView.Options();
-                    panoOptions.inputType = VrPanoramaView.Options.TYPE_MONO;
-                    vrImageView.setDisplayMode(VrPanoramaView.DisplayMode.FULLSCREEN_STEREO);
-                    vrImageView.loadImageFromBitmap(BitmapFactory.decodeStream(istr),
-                            panoOptions);
-                    istr.close();
-                } catch (IOException ignored) {
-                }
+//                try (InputStream istr = assetManager.open("test.jpg")) {
+//                    VrPanoramaView.Options panoOptions = new VrPanoramaView.Options();
+//                    panoOptions.inputType = VrPanoramaView.Options.TYPE_MONO;
+//                    vrImageView.setDisplayMode(VrPanoramaView.DisplayMode.FULLSCREEN_STEREO);
+//                    vrImageView.loadImageFromBitmap(BitmapFactory.decodeStream(istr),
+//                            panoOptions);
+//                    istr.close();
+//                } catch (IOException ignored) {
+//                }
+                vrImageView.setDisplayMode(VrPanoramaView.DisplayMode.FULLSCREEN_STEREO);
+                new GetBitmapFromUrl().execute("your url here");
             }
         });
     }
@@ -185,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * VrVideoEventListener handling VrVideoView onDIsplay triggering events
+     * VrVideoEventListener handling VrVideoView onDiplay triggering events
      */
     private class VideoCallback extends VrVideoEventListener {
 
@@ -232,5 +239,56 @@ public class MainActivity extends AppCompatActivity {
         public void onLoadError(String errorMessage) {
             // do something to indicate image loading failure with error message
         }
+    }
+
+    private class GetBitmapFromUrl extends AsyncTask<String, Void, Bitmap> {
+
+        AlertDialog mDialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mDialog = new AlertDialog.Builder(MainActivity.this).create();
+            mDialog.setMessage("Loading Image");
+            mDialog.show();
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            if (bitmap == null)
+                return;
+            VrPanoramaView.Options panoOptions = new VrPanoramaView.Options();
+            panoOptions.inputType = VrPanoramaView.Options.TYPE_MONO;
+            vrImageView.loadImageFromBitmap(bitmap, panoOptions);
+            // call this when you dont need the bitmap
+//            bitmap.recycle();
+            if (mDialog != null)
+                mDialog.dismiss();
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... strings) {
+            if (strings == null || strings.length <= 0)
+                return null;
+            HttpURLConnection connection = null;
+            Bitmap result = null;
+            try {
+                URL url = new URL(strings[0]);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+                InputStream input = connection.getInputStream();
+//                Bitmap myBitmap = BitmapFactory.decodeStream(input);
+                result = BitmapFactory.decodeStream(input);
+            } catch (IOException ex) {
+                result = null;
+            } finally {
+                if (connection != null)
+                    connection.disconnect();
+            }
+            return result;
+        }
+
     }
 }
